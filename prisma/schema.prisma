@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id            String          @id @default(uuid())
+  name          String
+  modules       ProjectModule[] // m2m
+  rules         Rule[]
+  answers       Answer[]
+  modulesDirect Module[] // reverse of Module.project
+}
+
+model Module {
+  id           String          @id @default(uuid())
+  name         String
+  surveyJson   Json
+  projectId    String? // optional FK
+  project      Project?        @relation(fields: [projectId], references: [id]) // optional direct 1:N
+  projectLinks ProjectModule[] // reverse of m2m
+  Answer       Answer[]
+}
+
+model ProjectModule {
+  id        String  @id @default(uuid())
+  project   Project @relation(fields: [projectId], references: [id])
+  projectId String
+  module    Module  @relation(fields: [moduleId], references: [id])
+  moduleId  String
+
+  @@unique([projectId, moduleId])
+}
+
+model Rule {
+  id               String @id @default(uuid())
+  sourceModuleId   String
+  sourceQuestionId String
+  operator         String
+  expectedValue    String
+  targetModuleId   String
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+}
+
+model Answer {
+  id          String @id @default(uuid())
+  questionId  String
+  answerValue String
+
+  projectId String
+  moduleId  String
+
+  project Project @relation(fields: [projectId], references: [id])
+  module  Module  @relation(fields: [moduleId], references: [id])
+}
