@@ -20,6 +20,7 @@ model Module {
   id           String          @id @default(uuid())
   name         String
   surveyJson   Json
+  condition    String?         // Module visibility condition
   projectId    String? // optional FK
   project      Project?        @relation(fields: [projectId], references: [id]) // optional direct 1:N
   projectLinks ProjectModule[] // reverse of m2m

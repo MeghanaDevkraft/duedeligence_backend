@@ -6,17 +6,7 @@ export async function createProject(req: Request, res: Response) {
   if (!name) return res.status(400).json({ error: "Project name is required" });
 
   try {
-    // Step 1: Update modules with surveyJson (project-specific edits)
-    if (modules && Array.isArray(modules)) {
-      for (const mod of modules) {
-        await prisma.module.update({
-          where: { id: mod.moduleId },
-          data: { surveyJson: mod.surveyJson }
-        });
-      }
-    }
-
-    // Step 2: Create project and connect modules via join table
+    // Step 1: Create project
     const project = await prisma.project.create({
       data: {
         name,
@@ -37,13 +27,27 @@ export async function createProject(req: Request, res: Response) {
       }
     });
 
+    // Step 2: Update modules with project-specific surveyJson and conditions
+    if (modules && Array.isArray(modules)) {
+      for (const mod of modules) {
+        if (mod.surveyJson || mod.condition) {
+          await prisma.module.update({
+            where: { id: mod.moduleId },
+            data: {
+              surveyJson: mod.surveyJson || {},
+              condition: mod.condition || null
+            }
+          });
+        }
+      }
+    }
+
     res.status(201).json(project);
   } catch (err) {
     console.error("Error creating project:", err);
     res.status(500).json({ error: "Could not create project", details: err });
   }
 }
-
 
 export async function getProjects(_req: Request, res: Response) {
   try {
@@ -97,17 +101,7 @@ export async function updateProject(req: Request, res: Response) {
       where: { projectId }
     });
 
-    // Step 2: Update module surveyJsons
-    if (modules && Array.isArray(modules)) {
-      for (const mod of modules) {
-        await prisma.module.update({
-          where: { id: mod.moduleId },
-          data: { surveyJson: mod.surveyJson }
-        });
-      }
-    }
-
-    // Step 3: Re-connect modules
+    // Step 2: Update project name
     const project = await prisma.project.update({
       where: { id: projectId },
       data: {
@@ -129,13 +123,27 @@ export async function updateProject(req: Request, res: Response) {
       }
     });
 
+    // Step 3: Update modules with project-specific surveyJson and conditions
+    if (modules && Array.isArray(modules)) {
+      for (const mod of modules) {
+        if (mod.surveyJson || mod.condition) {
+          await prisma.module.update({
+            where: { id: mod.moduleId },
+            data: {
+              surveyJson: mod.surveyJson || {},
+              condition: mod.condition || null
+            }
+          });
+        }
+      }
+    }
+
     res.json(project);
   } catch (err) {
     console.error("Error updating project:", err);
     res.status(500).json({ error: "Could not update project", details: err });
   }
 }
-
 
 export async function deleteProject(req: Request, res: Response) {
   const { projectId } = req.params;

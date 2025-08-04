@@ -4,13 +4,17 @@ import { prisma } from "../prisma";
 // Create Module
 export async function createModule(req: Request, res: Response) {
   console.log("Creating module with data:", req.body);
-  const { name, surveyJson } = req.body;
+  const { name, surveyJson, condition } = req.body;
   if (!name) return res.status(400).json({ error: "Module name is required" });
 
   try {
     console.log("Attempting to create module in database...");
     const module = await prisma.module.create({
-      data: { name, surveyJson: surveyJson || {} }
+      data: { 
+        name, 
+        surveyJson: surveyJson || {},
+        condition: condition || null
+      }
     });
     console.log("Module created successfully:", module);
     res.status(201).json(module);
@@ -59,15 +63,19 @@ export async function getModuleById(req: Request, res: Response) {
 // Update Module
 export async function updateModule(req: Request, res: Response) {
   const { id } = req.params;
-  const { name, surveyJson } = req.body;
-  console.log("Updating module:", { id, name, surveyJson });
+  const { name, surveyJson, condition } = req.body;
+  console.log("Updating module:", { id, name, surveyJson, condition });
   
   if (!name) return res.status(400).json({ error: "Module name is required" });
 
   try {
     const module = await prisma.module.update({
       where: { id },
-      data: { name, surveyJson: surveyJson || {} }
+      data: { 
+        name, 
+        surveyJson: surveyJson || {},
+        condition: condition || null
+      }
     });
     
     console.log("Module updated successfully:", module);
